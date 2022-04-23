@@ -134,11 +134,8 @@ tm.Tick += delegate
         }
     }
 
-    if (animationendframe > frame)
-    {
-        animationendframe++;
+    if (animationexecution != null)
         animationexecution(frame - animationendframe + animationlenth);
-    }
 
     //Cursor Drawing
     float cursoranimationload = (frame % 40) / 40f;
@@ -171,13 +168,19 @@ pb.MouseDown += async (sen, ev) =>
             return;
         if (game.CurrentPlayer is HumanPlayer player)
         {
+            var cursorstartloc = gridstartlocation(ccol, crow, ci, cj);
+            var playedpiece = game.CurrentPiece;
             setanimation(f =>
             {
-                var cursorstartloc = gridstartlocation(ccol, crow, ci, cj);
-                if (game.CurrentPiece == Piece.X)
-                    drawX(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, 1f, f / 10f);
-                else drawO(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, 1f, f / 10f);
-            }, 10);
+                // hide symbol on instantaneos drawing
+                g.FillRectangle(Brushes.White, cursorstartloc.X, cursorstartloc.Y, 
+                    minorsize - 4f - minorgridwidth,
+                    minorsize - 4f - minorgridwidth);
+                if (playedpiece == Piece.X)
+                    drawX(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, 1f, f / 20f);
+                else 
+                    drawO(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, 1f, f / 20f);
+            }, 20);
             await player.RegisterPlay(ccol, crow, ci, cj);
         }
     }
