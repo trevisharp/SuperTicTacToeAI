@@ -11,7 +11,7 @@ public class State
         ushort move = piece == Piece.Default ?
             (ushort)(data[0] % 4) : (ushort)piece;
         var section = data[3 * row + collumn];
-
+        data[3 * row + collumn] = section.SetPiece(i, j, move);
     }
 
     public static State Empty
@@ -19,7 +19,6 @@ public class State
         get
         {
             State state = StatePool.Current.RentState();
-            state.data[0] = 1;
             return state;
         }
     }

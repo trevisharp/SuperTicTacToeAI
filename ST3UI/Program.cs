@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,11 +12,15 @@ Application.SetCompatibleTextRenderingDefault(false);
 
 var form = new Form();
 
-State state = State.Empty;
+Game game = new Game();
+
+var player = new HumanPlayer();
+game.XPlayer = player;
 
 form.WindowState = FormWindowState.Maximized;
 form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
 form.Text = "Super Tic Tac Toe Artificial Inteligence";
+// Cursor.Hide();
 
 PictureBox pb = new PictureBox();
 pb.Dock = DockStyle.Fill;
@@ -28,11 +33,12 @@ int frame = 0;
 Timer tm = new Timer();
 tm.Interval = 25;
 
-form.Load += delegate
+form.Load += async delegate
 {
     bmp = new Bitmap(pb.Width, pb.Height);
     g = Graphics.FromImage(bmp);
     tm.Start();
+    await game.Play();
 };
 
 tm.Tick += delegate
@@ -76,9 +82,21 @@ tm.Tick += delegate
     
     #endregion
 
-    g.DrawString(state[0, 0, 0, 0].ToString(), form.Font, Brushes.Black, PointF.Empty);
+    g.DrawString(game.State[0, 0, 0, 0].ToString(), form.Font, Brushes.Black, PointF.Empty);
+
+    // Cursor.Position
 
     pb.Image = bmp;
+};
+
+pb.MouseDown += async (sen, ev) =>
+{
+    await player.RegisterPlay(0, 0, 0, 0);
+};
+
+pb.MouseMove += (sen, ev) =>
+{
+
 };
 
 void animategrid(
