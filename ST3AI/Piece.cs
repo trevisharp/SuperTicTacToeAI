@@ -1,4 +1,4 @@
-public enum Piece : ushort
+public enum Piece : byte
 {
     None = 0,
     X = 1,

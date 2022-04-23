@@ -41,6 +41,10 @@ float wid = 0, hei = 0,
     gridstart = 0, 
     padding = 0, 
     minorpadding = 0;
+List<Action> staticobjects = new List<Action>();
+
+// test game varibles
+bool[] hadwinner = new bool[9];
 
 // cursor position
 int ccol = 0;
@@ -69,6 +73,8 @@ tm.Tick += delegate
 {
     frame++;
     g.Clear(Color.White);
+
+    testallwinners();
 
     #region Start Grid Animation
 
@@ -102,6 +108,8 @@ tm.Tick += delegate
     
     #endregion
 
+    #region Pieces Draw
+
     for (int coll = 0; coll < 3; coll++)
         for (int row = 0; row < 3; row++)
             for (int i = 0; i < 3; i++)
@@ -134,10 +142,20 @@ tm.Tick += delegate
         }
     }
 
+    #endregion
+
+    #region Animations and Static Objects
+
+    foreach (var stobj in staticobjects)
+        stobj();
+
     if (animationexecution != null)
         animationexecution(frame - animationendframe + animationlenth);
 
-    //Cursor Drawing
+    #endregion
+
+    #region Cursor Draw
+
     float cursoranimationload = (frame % 40) / 40f;
     float cursoropacity = 1f;
     if (!game.IsActive(ccol, crow))
@@ -153,6 +171,8 @@ tm.Tick += delegate
         drawO(Cursor.Position.X - pb.PointToScreen(pb.Location).X, 
             Cursor.Position.Y - pb.PointToScreen(pb.Location).Y, 20f, 
             cursoropacity, cursoranimationload);
+    
+    #endregion
 
     pb.Image = bmp;
 };
@@ -170,6 +190,7 @@ pb.MouseDown += async (sen, ev) =>
         {
             var cursorstartloc = gridstartlocation(ccol, crow, ci, cj);
             var playedpiece = game.CurrentPiece;
+            // draw piece animation
             setanimation(f =>
             {
                 // hide symbol on instantaneos drawing
@@ -185,6 +206,7 @@ pb.MouseDown += async (sen, ev) =>
         }
     }
 };
+
 pb.MouseMove += (sen, ev) =>
 {
     calculatecursorgridposition(
@@ -334,11 +356,83 @@ void setanimation(Action<int> drawlogic, int len)
     };
 }
 
+bool testwinner(int col, int row)
+{
+    var winner = game.VerifyMinorWinner(col, row);
+    if (winner != Piece.None)
+    {
+        var majorlocation = gridstartlocation(col, row, 0, 0);
+        staticobjects.Add(() =>
+        {
+            // hide objects
+            g.FillRectangle(Brushes.White, 
+                majorlocation.X - minorpadding, 
+                majorlocation.Y - minorpadding, 
+                majorsize- 2 * minorpadding, 
+                majorsize- 2 * minorpadding);
+            if (winner == Piece.X)
+                drawX(majorlocation.X - minorpadding,
+                    majorlocation.Y - minorpadding,
+                    majorsize - 2 * minorpadding, 1f, 1f);
+            else 
+                drawO(majorlocation.X - minorpadding,
+                    majorlocation.Y - minorpadding,
+                    majorsize - 2 * minorpadding, 1f, 1f);
+        });
+        setanimation(f =>
+        {
+            g.FillRectangle(Brushes.White, 
+                majorlocation.X - minorpadding, 
+                majorlocation.Y - minorpadding, 
+                majorsize- 2 * minorpadding, 
+                majorsize- 2 * minorpadding);
+            if (winner == Piece.X)
+            drawX(majorlocation.X - minorpadding,
+                majorlocation.Y - minorpadding,
+                majorsize - 2 * minorpadding, 1f, f / 20f);
+            else 
+            drawO(majorlocation.X - minorpadding,
+                majorlocation.Y - minorpadding,
+                majorsize - 2 * minorpadding, 1f, f / 20f);
+        }, 20);
+        return true;
+    }
+    return false;
+}
+
+void testallwinners()
+{
+    for (int col = 0; col < 3; col++)
+    {
+        for (int row = 0; row < 3; row++)
+        {
+            int index = 3 * row + col;
+            if (!hadwinner[index])
+                hadwinner[index] = testwinner(row, col);
+        }
+    }
+}
+
 async void startgame()
 {
     game.XPlayer = new HumanPlayer();
     game.OPlayer = new HumanPlayer();
     Piece winner = await game.Play();
+
+    tm.Stop();
+    g.Clear(Color.White);
+
+    if (winner == Piece.X)
+    {
+        drawX(gridstart, 0, hei, 1f, 1f);
+    }
+    else if (winner == Piece.O)
+    {
+        drawO(gridstart, 0, hei, 1f, 1f);
+    }
+
+    pb.Image = bmp;
+    Cursor.Show();
 }
 
 Application.Run(form);

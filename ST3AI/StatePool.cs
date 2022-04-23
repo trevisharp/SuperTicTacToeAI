@@ -11,15 +11,15 @@ public class StatePool
 
     #endregion
 
-    private ArrayPool<ushort> pool;
+    private ArrayPool<byte> pool;
     private StatePool()
     {
-        this.pool = ArrayPool<ushort>.Create(10 * 1024 * 1024, 10);
+        this.pool = ArrayPool<byte>.Create(10 * 1024 * 1024, 10);
     }
 
     public State RentState()
     {
-        var bytes = this.pool.Rent(10);
+        var bytes = this.pool.Rent(81);
         var state = new State();
         state.data = bytes;
         return state;
