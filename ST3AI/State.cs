@@ -33,7 +33,7 @@ public class State
         }
         return Piece.None;
     }
-
+    
     public static State Empty
     {
         get

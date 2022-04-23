@@ -1,21 +1,15 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 Application.SetHighDpiMode(HighDpiMode.SystemAware);
 Application.EnableVisualStyles();
 Application.SetCompatibleTextRenderingDefault(false);
 
 var form = new Form();
-
 Game game = new Game();
-
-var player = new HumanPlayer();
-game.XPlayer = player;
+App app = new App();
 
 form.WindowState = FormWindowState.Maximized;
 form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
@@ -415,8 +409,8 @@ void testallwinners()
 
 async void startgame()
 {
-    game.XPlayer = new HumanPlayer();
-    game.OPlayer = new HumanPlayer();
+    game.XPlayer = app.PlayerX;
+    game.OPlayer = app.PlayerO;
     Piece winner = await game.Play();
 
     tm.Stop();

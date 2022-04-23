@@ -22,7 +22,7 @@ public class Game
         (int, int, int, int) nonnullplay = (0, 0, 0, 0);
         while (true)
         {
-            play = await XPlayer.Play(Piece.X);
+            play = await XPlayer.Play(State, Piece.X);
             if (!play.HasValue)
                 throw new Exception("Player cannot make a move");
             nonnullplay = play.Value;
@@ -41,7 +41,7 @@ public class Game
             if (winner != Piece.None)
                 break;
             
-            play = await OPlayer.Play(Piece.O);
+            play = await OPlayer.Play(State, Piece.O);
             if (!play.HasValue)
                 throw new Exception("Player cannot make a move");
             nonnullplay = play.Value;

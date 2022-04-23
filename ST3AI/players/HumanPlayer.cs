@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -7,7 +6,7 @@ public class HumanPlayer : Player
     private int[] lastplay = null;
     SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
-    public override async Task<(int, int, int, int)?> Play(Piece piece)
+    public override async Task<(int, int, int, int)?> Play(State state, Piece piece)
     {
         bool running = true;
         while (running)
