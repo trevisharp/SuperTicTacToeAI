@@ -20,7 +20,7 @@ game.XPlayer = player;
 form.WindowState = FormWindowState.Maximized;
 form.FormBorderStyle = FormBorderStyle.FixedToolWindow;
 form.Text = "Super Tic Tac Toe Artificial Inteligence";
-// Cursor.Hide();
+Cursor.Hide();
 
 PictureBox pb = new PictureBox();
 pb.Dock = DockStyle.Fill;
@@ -30,6 +30,9 @@ form.Controls.Add(pb);
 Bitmap bmp = null;
 Graphics g = null;
 int frame = 0;
+int animationendframe = -1,
+    animationlenth = 0;;
+Action<int> animationexecution = null;
 float wid = 0, hei = 0, 
     majorgridwidth = 10f, 
     minorgridwidth = 5f, 
@@ -77,10 +80,13 @@ tm.Tick += delegate
     {
         for (int j = 0; j < 3; j++)
         {
+            Brush brush = Brushes.Black;
+            if (!game.IsActive(i, j))
+                brush = new SolidBrush(Color.FromArgb(128, 128, 128));
             animategrid(padding + gridstart + i * (majorsize + majorgridwidth / 2),
                 padding + j * (majorsize + majorgridwidth / 2),
                 minorpadding, minorsize, minorgridwidth,
-                initstate, Brushes.Black);
+                initstate, brush);
         }
     }
 
@@ -96,7 +102,6 @@ tm.Tick += delegate
     
     #endregion
 
-    
     for (int coll = 0; coll < 3; coll++)
         for (int row = 0; row < 3; row++)
             for (int i = 0; i < 3; i++)
@@ -104,25 +109,53 @@ tm.Tick += delegate
                 {
                     var pieceloc = gridstartlocation(coll, row, i, j);
                     var piece = game.State[coll, row, i, j];
+                    float opacity = 1f;
+                    if (!game.IsActive(coll, row))
+                        opacity = .5f;
                     if (piece == Piece.X)
-                        drawX(pieceloc.X, pieceloc.Y);
+                        drawX(pieceloc.X, pieceloc.Y, minorsize - 4f - minorgridwidth, opacity);
                     else if (piece == Piece.O)
-                        drawO(pieceloc.X, pieceloc.Y);
+                        drawO(pieceloc.X, pieceloc.Y, minorsize - 4f - minorgridwidth, opacity);
                 }
 
     if (ccol != -1 && crow != -1)
     {
-
-        var cursorstartloc = gridstartlocation(ccol, crow, ci, cj);
-        if (game.CurrentPiece == Piece.X)
-            drawX(cursorstartloc.X, cursorstartloc.Y, .5f);
-        else if (game.CurrentPiece == Piece.O)
-            drawO(cursorstartloc.X, cursorstartloc.Y, .5f);
-
+        var piece = game.State[ccol, crow, ci, cj];
+        if (piece == Piece.None)
+        {
+            var cursorstartloc = gridstartlocation(ccol, crow, ci, cj);
+            if (game.IsActive(ccol, crow))
+            {
+                if (game.CurrentPiece == Piece.X)
+                    drawX(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, .5f);
+                else if (game.CurrentPiece == Piece.O)
+                    drawO(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, .5f);
+            }
+        }
     }
 
+    if (animationendframe > frame)
+    {
+        animationendframe++;
+        animationexecution(frame - animationendframe + animationlenth);
+    }
 
-    // Cursor.Position
+    //Cursor Drawing
+    float cursoranimationload = (frame % 40) / 40f;
+    float cursoropacity = 1f;
+    if (!game.IsActive(ccol, crow))
+    {
+        cursoranimationload = 1f;
+        cursoropacity = .5f;
+    }
+    if (game.CurrentPiece == Piece.X)
+        drawX(Cursor.Position.X - pb.PointToScreen(pb.Location).X, 
+            Cursor.Position.Y - pb.PointToScreen(pb.Location).Y, 20f, 
+            cursoropacity, cursoranimationload);
+    else if (game.CurrentPiece == Piece.O)
+        drawO(Cursor.Position.X - pb.PointToScreen(pb.Location).X, 
+            Cursor.Position.Y - pb.PointToScreen(pb.Location).Y, 20f, 
+            cursoropacity, cursoranimationload);
 
     pb.Image = bmp;
 };
@@ -131,8 +164,22 @@ pb.MouseDown += async (sen, ev) =>
 {
     if (ev.Button == MouseButtons.Left)
     {
+        if (!game.IsActive(ccol, crow))
+            return;
+        var piece = game.State[ccol, crow, ci, cj];
+        if (piece != Piece.None)
+            return;
         if (game.CurrentPlayer is HumanPlayer player)
+        {
+            setanimation(f =>
+            {
+                var cursorstartloc = gridstartlocation(ccol, crow, ci, cj);
+                if (game.CurrentPiece == Piece.X)
+                    drawX(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, 1f, f / 10f);
+                else drawO(cursorstartloc.X, cursorstartloc.Y, minorsize - 4f - minorgridwidth, 1f, f / 10f);
+            }, 10);
             await player.RegisterPlay(ccol, crow, ci, cj);
+        }
     }
 };
 pb.MouseMove += (sen, ev) =>
@@ -145,42 +192,42 @@ pb.MouseMove += (sen, ev) =>
 void animategrid(
     float startx, float starty, 
     float padding, float size, float barwidth, 
-    float animationpercent, Brush color)
+    float animationload, Brush color)
 {
     float totalsize = 3 * size + 2 * padding;
     animatebar(
         startx + padding + size - barwidth / 2, starty + totalsize / 2,
         barwidth, 0, 
         barwidth, 3 * size,
-        animationpercent, color);
+        animationload, color);
     
     animatebar(
         startx + padding + 2 * size - barwidth / 2, starty + totalsize / 2,
         barwidth, 0, 
         barwidth, 3 * size,
-        animationpercent, color);
+        animationload, color);
     
     animatebar(
         startx + totalsize / 2, starty + padding + size - barwidth / 2,
         0, barwidth, 
         3 * size, barwidth,
-        animationpercent, color);
+        animationload, color);
     
     animatebar(
         startx + totalsize / 2, starty + padding + 2 * size - barwidth / 2,
         0, barwidth, 
         3 * size, barwidth,
-        animationpercent, color);   
+        animationload, color);   
 }
 
 void animatebar(
     float startx, float starty,
     float startwid, float starthei,
     float maxwid, float maxhei,
-    float animationpercent, Brush color)
+    float animationload, Brush color)
 {
-    float wid = (maxwid - startwid) * animationpercent + startwid;
-    float hei = (maxhei - starthei) * animationpercent + starthei;
+    float wid = (maxwid - startwid) * animationload + startwid;
+    float hei = (maxhei - starthei) * animationload + starthei;
     g.FillRectangle(color, startx - wid / 2, starty - hei / 2, wid, hei);
 }
 
@@ -236,18 +283,26 @@ void calculatecursorgridposition(float x, float y)
     }
 }
 
-void drawX(float x, float y, float opacity = 1f)
+void drawX(float x, float y, float size, float opacity = 1f, float animationload = 1f)
 {
     var opacityfactor = (int)(255 * (1f - opacity));
-    var color = new SolidBrush(Color.FromArgb(255, opacityfactor, opacityfactor));
-    g.FillRectangle(color, x + 2f, y + 2f, minorsize - 4f, minorsize - 4f);
+    var color = Color.FromArgb(255, opacityfactor, opacityfactor);
+    var pen = new Pen(color, 5f);
+    g.DrawLine(pen, x, y, 
+        (x + size) * animationload + (1f - animationload) * (x),
+        (y + size) * animationload + (1f - animationload) * (y));
+    g.DrawLine(pen, x + size, y, 
+        (x + size) * (1f - animationload) + animationload * (x),
+        (y + size) * animationload + (1f - animationload) * (y));
 }
 
-void drawO(float x, float y, float opacity = 1f)
+void drawO(float x, float y, float size, float opacity = 1f, float animationload = 1f)
 {
     var opacityfactor = (int)(255 * (1f - opacity));
     var color = new SolidBrush(Color.FromArgb(opacityfactor, opacityfactor, 255));
-    g.FillRectangle(Brushes.Blue, x + 2f, y + 2f, minorsize - 4f, minorsize - 4f);
+    
+    g.FillPie(color, x, y, size, size, 0f, 360f * animationload);
+    g.FillEllipse(Brushes.White, x + 5f, y + 5f, size - 10f, size - 10f);
 }
 
 PointF gridstartlocation(int coll, int row, int i, int j)
@@ -259,6 +314,22 @@ PointF gridstartlocation(int coll, int row, int i, int j)
         row * (majorsize + majorgridwidth / 2) 
         + j * (minorsize + minorgridwidth / 2)
     );
+
+void setanimation(Action<int> drawlogic, int len)
+{
+    animationlenth = len;
+    animationendframe = frame + len;
+    animationexecution = (f) =>
+    {
+        drawlogic(f);
+        if (f == len)
+        {
+            animationendframe = -1;
+            animationlenth = -1;
+            animationexecution = null;
+        }
+    };
+}
 
 async void startgame()
 {
