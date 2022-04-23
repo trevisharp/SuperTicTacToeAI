@@ -9,7 +9,7 @@ public class State
     public void Play(int collumn, int row, int i, int j, Piece piece)
     {
         ushort move = piece == Piece.Default ?
-            (ushort)(data[0] % 4) : (ushort)piece;
+            (ushort)(data[9] % 4) : (ushort)piece;
         var section = data[3 * row + collumn];
         data[3 * row + collumn] = section.SetPiece(i, j, move);
     }

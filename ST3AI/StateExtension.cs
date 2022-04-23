@@ -5,7 +5,7 @@ public static class StateExtension
     public static int GetPiece(this ushort section, int i, int j)
     {
         int index = 3 * j + i;
-        return (section / powbuffer[index]) % powbuffer[index + 1];
+        return (section / powbuffer[index]) % 3;
     }
 
     public static ushort SetPiece(this ushort section, int i, int j, ushort value)
